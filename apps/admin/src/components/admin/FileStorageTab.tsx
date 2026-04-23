@@ -9,6 +9,7 @@ import {
   Search,
   FileText,
   ExternalLink,
+  Trash2,
 } from 'lucide-react';
 
 export type StorageStatsSummary = {
@@ -57,6 +58,8 @@ export function FileStorageTab({ storageStats }: { storageStats: StorageStatsSum
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'createdAt' | 'name' | 'size'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const fetchFiles = async () => {
     setLoading(true);
@@ -134,6 +137,29 @@ export function FileStorageTab({ storageStats }: { storageStats: StorageStatsSum
       setSortOrder('desc');
     }
     setOffset(0);
+  };
+
+  const handleDelete = async (fileId: string) => {
+    if (confirmDeleteId !== fileId) {
+      setConfirmDeleteId(fileId);
+      return;
+    }
+    setDeletingId(fileId);
+    setConfirmDeleteId(null);
+    try {
+      const res = await fetch(`/api/data/admin/files/${fileId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error || `Delete failed: ${res.status}`);
+      } else {
+        await fetchFiles();
+      }
+    } catch (err) {
+      console.error('FileStorageTab delete error:', err);
+      setError('Delete request failed');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -326,14 +352,49 @@ export function FileStorageTab({ storageStats }: { storageStats: StorageStatsSum
                       : '—'}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {file.libraryId && (
-                      <Link
-                        href={`/libraries/${file.libraryId}?tab=user-libraries`}
-                        className="inline-flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-700"
-                      >
-                        View <ExternalLink className="w-3 h-3" />
-                      </Link>
-                    )}
+                    <div className="flex items-center justify-end gap-2">
+                      {file.libraryId && (
+                        <Link
+                          href={`/libraries/${file.libraryId}?tab=user-libraries`}
+                          className="inline-flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-700"
+                        >
+                          View <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      )}
+                      {confirmDeleteId === file.id ? (
+                        <span className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(file.id)}
+                            disabled={deletingId === file.id}
+                            className="text-xs font-medium text-red-600 hover:text-red-700 px-1.5 py-0.5 rounded border border-red-300 hover:bg-red-50 transition-colors"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteId(null)}
+                            className="text-xs text-gray-500 hover:text-gray-700 px-1.5 py-0.5 rounded border border-gray-200 hover:bg-gray-50 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(file.id)}
+                          disabled={deletingId === file.id}
+                          title="Delete file"
+                          className="inline-flex items-center text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40"
+                        >
+                          {deletingId === file.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
