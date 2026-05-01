@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Header } from '@jazzmind/busibox-app';
+import { FeedbackWidget } from '@jazzmind/busibox-app';
 import type { NavigationItem } from '@jazzmind/busibox-app';
 import { useSession } from '@jazzmind/busibox-app/components/auth/SessionProvider';
 
@@ -58,6 +59,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
       <main className="flex-1 min-h-0 overflow-auto">
         {children}
       </main>
+      <FeedbackWidget appId="busibox-agents" />
     </div>
   );
 }

@@ -49,6 +49,7 @@
     "react-dropzone": "^14.3.5",
     "react-force-graph-2d": "^1.29.1",
     "react-hot-toast": "^2.6.0",
+    "recharts": "^2.15.0",
     "react-markdown": "^10.1.0",
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "@jazzmind/busibox-app/components/auth/SessionProvider";
-import { ThemeProvider, CustomizationProvider, BusiboxApiProvider } from "@jazzmind/busibox-app";
+import { ThemeProvider, CustomizationProvider, BusiboxApiProvider, FeedbackWidget } from "@jazzmind/busibox-app";
 import { FetchWrapper } from "@jazzmind/busibox-app";
 import { VersionBar } from "@jazzmind/busibox-app";
 import "./globals.css";
@@ -50,6 +50,7 @@ export default function RootLayout({
               <CustomizationProvider>
                 {children}
                 <VersionBar />
+                <FeedbackWidget appId="busibox-portal" />
               </CustomizationProvider>
             </SessionProvider>
           </BusiboxApiProvider>

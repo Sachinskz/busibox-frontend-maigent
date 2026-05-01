@@ -22,6 +22,7 @@ import {
   TestTube,
   Server,
   BarChart3,
+  TrendingUp,
   ChevronLeft,
   ChevronRight,
   Home,
@@ -50,6 +51,13 @@ const navItems: NavItem[] = [
     href: '/',
     icon: <BarChart3 className="w-5 h-5" />,
     description: 'Live AI usage overview',
+  },
+  {
+    id: 'analytics',
+    label: 'Analytics',
+    href: '/analytics',
+    icon: <TrendingUp className="w-5 h-5" />,
+    description: 'App usage & satisfaction',
   },
   {
     id: 'users',

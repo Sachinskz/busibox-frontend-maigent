@@ -1,3 +1,7 @@
+// Components - Feedback
+export { FeedbackWidget } from './feedback/FeedbackWidget';
+export type { FeedbackWidgetProps, FeedbackRating } from './feedback/FeedbackWidget';
+
 // Components - Shared
 export { Button } from './shared/Button';
 export { Input } from './shared/Input';

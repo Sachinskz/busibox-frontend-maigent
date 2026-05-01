@@ -13,7 +13,7 @@ import { ReactNode, useState } from 'react';
 import { ProtectedRoute } from '@jazzmind/busibox-app/components/auth/ProtectedRoute';
 import { PasskeyRequiredWrapper } from '@jazzmind/busibox-app/components/auth/PasskeyRequiredWrapper';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
-import { Header } from '@jazzmind/busibox-app';
+import { Header, FeedbackWidget } from '@jazzmind/busibox-app';
 import { useSession } from '@jazzmind/busibox-app/components/auth/SessionProvider';
 import type { NavigationItem } from '@jazzmind/busibox-app';
 import { Toaster } from 'react-hot-toast';
@@ -97,6 +97,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
           
           <Toaster position="top-right" />
+          <FeedbackWidget appId="busibox-admin" />
         </div>
       </PasskeyRequiredWrapper>
     </ProtectedRoute>

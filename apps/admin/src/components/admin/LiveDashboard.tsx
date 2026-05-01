@@ -13,6 +13,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { 
   Activity, 
   MessageSquare, 
@@ -221,6 +222,33 @@ function ActivityTicker({ activities, primaryColor }: { activities: ActivityEven
   );
 }
 
+type AppUsageSummaryItem = {
+  app_id: string;
+  unique_users_today: number;
+  unique_users_7d: number;
+  requests_7d: number;
+  satisfaction_score: number | null;
+  daily_trend: Array<{ date: string; unique_users: number }>;
+};
+
+// Inline mini sparkline for the dashboard (same SVG pattern as the existing Sparkline above)
+function DashSparkline({ data, color = '#6366f1' }: { data: number[]; color?: string }) {
+  if (data.length < 2) return null;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const w = 60;
+  const h = 20;
+  const pts = data
+    .map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * (h - 2)}`)
+    .join(' ');
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function LiveDashboard() {
   const { customization } = useCustomization();
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
@@ -231,6 +259,8 @@ export function LiveDashboard() {
   const [totalDocuments, setTotalDocuments] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [appUsageSummary, setAppUsageSummary] = useState<AppUsageSummaryItem[]>([]);
+  const [overallSatisfaction, setOverallSatisfaction] = useState<number | null>(null);
   
   // Time series data for charts
   const [sessionHistory, setSessionHistory] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
@@ -239,10 +269,12 @@ export function LiveDashboard() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [dashboardRes, activityRes, modelRes] = await Promise.all([
+      const [dashboardRes, activityRes, modelRes, appUsageRes, feedbackRes] = await Promise.all([
         fetch('/api/dashboard'),
         fetch('/api/activity/recent'),
         fetch('/api/llm/usage'),
+        fetch('/api/analytics/apps?days=7').catch(() => null),
+        fetch('/api/analytics/feedback').catch(() => null),
       ]);
 
       if (dashboardRes.ok) {
@@ -289,6 +321,37 @@ export function LiveDashboard() {
             const avgLatency = Math.round(models.reduce((sum: number, m: ModelUsage) => sum + m.avgLatency, 0) / models.length);
             setLatencyHistory(prev => [...prev.slice(1), avgLatency]);
           }
+        }
+      }
+
+      // App usage summary (optional — gracefully absent on first deploy)
+      if (appUsageRes?.ok) {
+        const appData = await appUsageRes.json();
+        const apps = (appData.apps || []).slice(0, 5) as Array<{
+          app_id: string;
+          unique_users_today: number;
+          unique_users_7d: number;
+          requests_7d: number;
+          daily_trend: Array<{ date: string; unique_users: number }>;
+        }>;
+        setAppUsageSummary(apps.map((a) => ({ ...a, satisfaction_score: null })));
+      }
+
+      if (feedbackRes?.ok) {
+        const fbData = await feedbackRes.json();
+        const items = fbData.feedback || [];
+        if (items.length > 0) {
+          const total = items.reduce((s: number, f: { total: number }) => s + f.total, 0);
+          const pos = items.reduce((s: number, f: { positive: number }) => s + f.positive, 0);
+          const neg = items.reduce((s: number, f: { negative: number }) => s + f.negative, 0);
+          if (total > 0) setOverallSatisfaction(Math.round(((pos - neg) / total) * 100 * 10) / 10);
+          // Merge satisfaction scores into app summary
+          const fbByApp = new Map<string, number>(
+            items.map((f: { app_id: string; satisfaction_score: number }) => [f.app_id, f.satisfaction_score]),
+          );
+          setAppUsageSummary((prev) =>
+            prev.map((a) => ({ ...a, satisfaction_score: fbByApp.get(a.app_id) ?? null })),
+          );
         }
       }
 
@@ -573,6 +636,52 @@ export function LiveDashboard() {
           </div>
         </div>
       </div>
+
+      {/* App Usage Summary */}
+      {appUsageSummary.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-indigo-500" />
+              App Usage (7 days)
+            </h3>
+            {overallSatisfaction !== null && (
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${overallSatisfaction >= 60 ? 'bg-green-50 text-green-700' : overallSatisfaction >= 20 ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-700'}`}>
+                Satisfaction {overallSatisfaction > 0 ? '+' : ''}{overallSatisfaction}
+              </span>
+            )}
+          </div>
+          <div className="divide-y divide-gray-50 dark:divide-gray-700">
+            {appUsageSummary.map((app) => (
+              <div key={app.app_id} className="px-4 py-3 flex items-center gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                    {app.app_id}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {app.unique_users_today} users today · {app.unique_users_7d} this week · {app.requests_7d.toLocaleString()} requests
+                  </p>
+                </div>
+                <DashSparkline data={app.daily_trend.map((d) => d.unique_users)} />
+                {app.satisfaction_score !== null && (
+                  <span className={`text-xs font-semibold w-10 text-right ${app.satisfaction_score >= 60 ? 'text-green-600' : app.satisfaction_score >= 20 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    {app.satisfaction_score > 0 ? '+' : ''}{app.satisfaction_score}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+            <Link
+              href="/analytics"
+              className="text-sm font-medium flex items-center gap-1 transition-colors hover:opacity-80"
+              style={{ color: customization.primaryColor }}
+            >
+              View full analytics <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* CSS for animations */}
       <style jsx>{`
