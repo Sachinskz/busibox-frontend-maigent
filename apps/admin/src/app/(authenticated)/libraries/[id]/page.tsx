@@ -247,13 +247,14 @@ export default function LibraryDetailPage({ params }: PageProps) {
   const handleDeleteDocument = async (doc: LibraryDocument) => {
     if (!confirm(`Delete "${doc.originalFilename || doc.name}"? This cannot be undone.`)) return;
     setDeletingDocId(doc.id);
+    setError(null);
     try {
       const response = await fetch(
         `/api/libraries/${libraryId}/documents?docId=${encodeURIComponent(doc.id)}`,
         { method: 'DELETE' },
       );
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
         throw new Error(data.error || `Failed to delete (${response.status})`);
       }
       setDocuments(prev => prev.filter(d => d.id !== doc.id));

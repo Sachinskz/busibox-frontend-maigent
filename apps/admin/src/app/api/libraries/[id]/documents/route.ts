@@ -95,7 +95,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     const dataApiUrl = getDataApiUrl();
 
-    // Try admin endpoint first (bypasses ownership RLS)
+    // Try admin endpoint first (bypasses ownership RLS, requires data.admin scope)
     const adminUrl = `${dataApiUrl}/files/admin/${docId}`;
     console.log('[admin/libraries/documents/delete] Trying admin delete:', adminUrl);
     const adminRes = await fetch(adminUrl, {
@@ -108,13 +108,14 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     const adminBody = await adminRes.text();
+    const adminStatus = adminRes.status;
     console.warn(
       '[admin/libraries/documents/delete] Admin delete failed:',
-      adminRes.status,
+      adminStatus,
       adminBody,
     );
 
-    // Fallback: try standard delete (works if admin owns the file or has data.delete scope)
+    // Fallback: try standard delete (works if admin owns the file)
     const standardUrl = `${dataApiUrl}/files/${docId}`;
     console.log('[admin/libraries/documents/delete] Trying standard delete:', standardUrl);
     const stdRes = await fetch(standardUrl, {
@@ -127,16 +128,38 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     const stdBody = await stdRes.text();
+    const stdStatus = stdRes.status;
     console.error(
       '[admin/libraries/documents/delete] Standard delete also failed:',
-      stdRes.status,
+      stdStatus,
       stdBody,
     );
 
+    // {"detail":"Not Found"} is FastAPI's generic 404 when no route matches.
+    // This means the admin delete endpoint hasn't been deployed to production yet.
+    const adminRouteNotDeployed =
+      adminStatus === 404 && adminBody.includes('"Not Found"');
+
+    if (adminRouteNotDeployed) {
+      return apiError(
+        'Cannot delete this file: the data service needs to be redeployed to enable admin file deletion. ' +
+          'Run `make manage SERVICE=data ACTION=redeploy` from the busibox repo, then try again.',
+        503,
+      );
+    }
+
+    if (adminStatus === 403) {
+      return apiError(
+        'Cannot delete this file: the admin token is missing the data.admin scope. ' +
+          'Ensure the Admin role has data.admin (or data.*) scope in authz, then try again.',
+        403,
+      );
+    }
+
     return apiError(
-      `Failed to delete file (admin: ${adminRes.status}, standard: ${stdRes.status}). ` +
-        `Admin response: ${adminBody}`,
-      adminRes.status,
+      `Failed to delete file. The record may be orphaned or corrupted. ` +
+        `(admin: ${adminStatus}, standard: ${stdStatus})`,
+      adminStatus,
     );
   } catch (error) {
     console.error('[admin/libraries/documents/delete] Error:', error);
