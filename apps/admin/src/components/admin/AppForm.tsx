@@ -1400,8 +1400,13 @@ export function AppForm({ app, onSuccess, onCancel }: AppFormProps) {
               pattern="^\/.*"
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
+            {deployedPath && app?.deployedPath && deployedPath !== app.deployedPath && app.lastDeployment?.status === 'completed' && (
+              <p className="mt-1 text-sm text-amber-600 font-medium">
+                ⚠️ Path changed from &ldquo;{app.deployedPath}&rdquo;. Click Deploy to rebuild with the new path.
+              </p>
+            )}
             <p className="mt-1 text-sm text-gray-500">
-              The URL path where this app is deployed (e.g., /my-app). Set from manifest on first deploy, can be changed if there are path conflicts.
+              The URL path where this app is deployed (e.g., /my-app). Changing this requires a redeploy to update nginx routing and the app build.
             </p>
           </div>
           <div>

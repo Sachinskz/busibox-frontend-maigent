@@ -151,6 +151,12 @@ export async function POST(
       manifest = manifestResult.manifest;
     }
 
+    // If the admin has overridden the deployed path, use that instead of manifest default.
+    // This ensures nginx and NEXT_PUBLIC_BASE_PATH match the admin-configured path.
+    if (app.deployedPath && app.deployedPath !== manifest.defaultPath) {
+      manifest = { ...manifest, defaultPath: app.deployedPath };
+    }
+
     // Trigger deployment
     try {
       const deployment = await deployApp({

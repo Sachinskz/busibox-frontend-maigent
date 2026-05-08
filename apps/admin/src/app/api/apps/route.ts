@@ -212,6 +212,15 @@ export async function POST(request: NextRequest) {
     const findPathConflict = (candidatePath: string) =>
       existingApps.find((app) => app.url === candidatePath || app.deployedPath === candidatePath);
 
+    const resolveAvailablePath = (basePath: string): string => {
+      if (!findPathConflict(basePath)) return basePath;
+      for (let i = 2; i <= 99; i++) {
+        const candidate = `${basePath}-${i}`;
+        if (!findPathConflict(candidate)) return candidate;
+      }
+      return basePath;
+    };
+
     if (type === 'EXTERNAL') {
       if (!url) return apiError('URL is required for external apps', 400);
 
@@ -238,10 +247,7 @@ export async function POST(request: NextRequest) {
         if (existingAppById) {
           return apiError(`An app with name '${manifest.name}' or ID '${manifest.id}' already exists`, 409);
         }
-        const existingPathApp = findPathConflict(manifest.defaultPath);
-        if (existingPathApp) {
-          return apiError(`Path '${manifest.defaultPath}' is already used by ${existingPathApp.name}`, 409);
-        }
+        const resolvedPath = resolveAvailablePath(manifest.defaultPath);
 
         const newApp = await createAppInStore(
           context.accessToken,
@@ -253,7 +259,7 @@ export async function POST(request: NextRequest) {
             description: description || manifest.description,
             type: 'EXTERNAL',
             url,
-            deployedPath: manifest.defaultPath,
+            deployedPath: resolvedPath,
             selectedIcon: selectedIcon || manifest.icon,
             displayOrder: displayOrder || 0,
             isActive: requestedIsActive ?? false,
@@ -279,8 +285,9 @@ export async function POST(request: NextRequest) {
             },
             { authzBaseUrl: getAuthzBaseUrl(), verbose: false }
           );
+          const deployManifest = { ...manifest, defaultPath: resolvedPath };
           const deployment = await deployApp(
-            { appId: newApp.id, appName: manifest.id, localDevDir, manifest, devMode: true },
+            { appId: newApp.id, appName: manifest.id, localDevDir, manifest: deployManifest, devMode: true },
             exchangeResult.accessToken
           );
 
@@ -296,11 +303,14 @@ export async function POST(request: NextRequest) {
                 displayOrder: newApp.displayOrder,
                 isActive: newApp.isActive,
                 healthEndpoint: newApp.healthEndpoint,
+                deployedPath: newApp.deployedPath,
                 devMode: newApp.devMode,
                 createdAt: newApp.createdAt,
               },
               deployment: { id: deployment.deploymentId, status: 'pending' },
-              message: 'Local dev app registered and deployment initiated.',
+              message: resolvedPath !== manifest.defaultPath
+                ? `Local dev app registered. Path '${manifest.defaultPath}' was in use, deployed at '${resolvedPath}' instead.`
+                : 'Local dev app registered and deployment initiated.',
             },
             201
           );
@@ -348,10 +358,7 @@ export async function POST(request: NextRequest) {
         if (existingAppById) {
           return apiError(`An app with name '${manifest.name}' or ID '${manifest.id}' already exists`, 409);
         }
-        const existingPathApp = findPathConflict(manifest.defaultPath);
-        if (existingPathApp) {
-          return apiError(`Path '${manifest.defaultPath}' is already used by ${existingPathApp.name}`, 409);
-        }
+        const resolvedGhPath = resolveAvailablePath(manifest.defaultPath);
 
         const newApp = await createAppInStore(
           context.accessToken,
@@ -363,7 +370,7 @@ export async function POST(request: NextRequest) {
             description: description || manifest.description,
             type: 'EXTERNAL',
             url,
-            deployedPath: manifest.defaultPath,
+            deployedPath: resolvedGhPath,
             selectedIcon: selectedIcon || manifest.icon,
             displayOrder: displayOrder || 0,
             isActive: requestedIsActive ?? false,
@@ -389,13 +396,14 @@ export async function POST(request: NextRequest) {
             },
             { authzBaseUrl: getAuthzBaseUrl(), verbose: false }
           );
+          const deployManifest = { ...manifest, defaultPath: resolvedGhPath };
           const deployment = await deployApp(
             {
               appId: newApp.id,
               appName: manifest.id,
               githubRepo: url,
               githubToken: githubToken || undefined,
-              manifest,
+              manifest: deployManifest,
               environment: 'production',
             },
             exchangeResult.accessToken
@@ -413,10 +421,13 @@ export async function POST(request: NextRequest) {
                 displayOrder: newApp.displayOrder,
                 isActive: newApp.isActive,
                 healthEndpoint: newApp.healthEndpoint,
+                deployedPath: newApp.deployedPath,
                 createdAt: newApp.createdAt,
               },
               deployment: { id: deployment.deploymentId, status: 'pending' },
-              message: 'App registered and deployment initiated. Check deployment logs for progress.',
+              message: resolvedGhPath !== manifest.defaultPath
+                ? `App registered. Path '${manifest.defaultPath}' was in use, deployed at '${resolvedGhPath}' instead.`
+                : 'App registered and deployment initiated. Check deployment logs for progress.',
             },
             201
           );
