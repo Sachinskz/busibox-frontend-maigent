@@ -11,7 +11,7 @@ interface GpuInfo {
 }
 
 interface Assignment {
-  model_key: string;
+  model_key?: string;
   model_name: string;
   assigned: boolean;
   gpu?: string;
