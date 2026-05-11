@@ -64,12 +64,6 @@ export async function PATCH(request: NextRequest) {
     const body = await parseJsonBody(request);
 
     // Validate numeric ranges
-    if (body.maxParallelStrategies !== undefined) {
-      if (body.maxParallelStrategies < 1 || body.maxParallelStrategies > 3) {
-        return apiError('maxParallelStrategies must be between 1 and 3', 400);
-      }
-    }
-
     if (body.chunkSizeMin !== undefined) {
       if (body.chunkSizeMin < 100 || body.chunkSizeMin > 1000) {
         return apiError('chunkSizeMin must be between 100 and 1000', 400);
@@ -91,10 +85,7 @@ export async function PATCH(request: NextRequest) {
     const { accessToken, roleIds } = await getDataApiTokenForSettings(user.id, sessionJwt);
     const updatedSettings = await updateDataSettings(accessToken, roleIds, {
       llmCleanupEnabled: body.llmCleanupEnabled,
-      multiFlowEnabled: body.multiFlowEnabled,
-      maxParallelStrategies: body.maxParallelStrategies,
       markerEnabled: body.markerEnabled,
-      colpaliEnabled: body.colpaliEnabled,
       entityExtractionEnabled: body.entityExtractionEnabled,
       chunkSizeMin: body.chunkSizeMin,
       chunkSizeMax: body.chunkSizeMax,

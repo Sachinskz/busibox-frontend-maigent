@@ -16,10 +16,7 @@ interface DataSettingsFormProps {
 export function DataSettingsForm({ settings, section }: DataSettingsFormProps) {
   const [formData, setFormData] = useState({
     llmCleanupEnabled: settings.llmCleanupEnabled,
-    multiFlowEnabled: settings.multiFlowEnabled,
-    maxParallelStrategies: settings.maxParallelStrategies,
     markerEnabled: settings.markerEnabled,
-    colpaliEnabled: settings.colpaliEnabled,
     entityExtractionEnabled: settings.entityExtractionEnabled,
     chunkSizeMin: settings.chunkSizeMin,
     chunkSizeMax: settings.chunkSizeMax,
@@ -118,28 +115,9 @@ export function DataSettingsForm({ settings, section }: DataSettingsFormProps) {
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">Visual &amp; Graph Processing</h3>
-          <p className="text-sm text-gray-500 mb-4">Optional enrichment that requires additional GPU or infrastructure resources.</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">Knowledge Graph</h3>
+          <p className="text-sm text-gray-500 mb-4">Extract entities and relationships during ingest to build a queryable knowledge graph.</p>
           <div className="space-y-4">
-            <div className="flex items-start">
-              <div className="flex items-center h-5">
-                <input
-                  id="colpaliEnabled"
-                  type="checkbox"
-                  checked={formData.colpaliEnabled}
-                  onChange={(e) => updateImmediate('colpaliEnabled', e.target.checked, e.target)}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-              </div>
-              <div className="ml-3">
-                <label htmlFor="colpaliEnabled" className="font-medium text-gray-900">ColPali Visual Embeddings</label>
-                <p className="text-sm text-gray-500 mt-1">
-                  Generate visual embeddings for semantic image search on PDFs and images. Applies when documents are reprocessed or uploaded via non-standard ingest paths.
-                </p>
-                <p className="text-xs text-amber-600 mt-1">Requires GPU and ~4GB VRAM</p>
-              </div>
-            </div>
-
             <div className="flex items-start">
               <div className="flex items-center h-5">
                 <input
@@ -153,7 +131,7 @@ export function DataSettingsForm({ settings, section }: DataSettingsFormProps) {
               <div className="ml-3">
                 <label htmlFor="entityExtractionEnabled" className="font-medium text-gray-900">Entity &amp; Keyword Extraction</label>
                 <p className="text-sm text-gray-500 mt-1">
-                  Extract entities and keywords for the knowledge graph via targeted reprocessing. Does not run automatically during standard ingest.
+                  When enabled, automatically extract entities and keywords during document ingest. When disabled, extraction only runs via the Extract button or post-processing workflows.
                 </p>
                 <p className="text-xs text-amber-600 mt-1">Requires Neo4j</p>
               </div>

@@ -89,10 +89,7 @@ export async function POST(request: NextRequest) {
     // Add processing configuration from data settings
     const processingConfig = JSON.stringify({
       llm_cleanup_enabled: settings.llmCleanupEnabled,
-      multi_flow_enabled: settings.multiFlowEnabled,
-      max_parallel_strategies: settings.maxParallelStrategies,
       marker_enabled: settings.markerEnabled,
-      colpali_enabled: settings.colpaliEnabled,
       entity_extraction_enabled: settings.entityExtractionEnabled,
       chunk_size_min: settings.chunkSizeMin,
       chunk_size_max: settings.chunkSizeMax,

@@ -102,12 +102,22 @@ async function ensureDocument(token: string, roleIds: string[]): Promise<string>
     body.roleIds = roleIds;
   }
 
-  const created = await dataApiRequest<{ id: string }>(token, '/data', {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
-
-  return created.id;
+  try {
+    const created = await dataApiRequest<{ id: string }>(token, '/data', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    return created.id;
+  } catch (err) {
+    // If creation failed due to a duplicate key (another request beat us),
+    // find the document that was already created and return its id.
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('duplicate') || msg.includes('409')) {
+      const retryId = await findDocumentId(token);
+      if (retryId) return retryId;
+    }
+    throw err;
+  }
 }
 
 async function getSettingsRecord(

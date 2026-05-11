@@ -51,7 +51,22 @@ export function ModelLibrary({ backend }: ModelLibraryProps) {
       setModels(browseData.data?.models ?? browseData.models ?? []);
       if (activeRes.ok) {
         const activeData = await activeRes.json();
-        setActive(activeData.data?.models ?? activeData.models ?? []);
+        const activeModels: ActiveModel[] = activeData.data?.models ?? activeData.models ?? [];
+        setActive(activeModels);
+        // Pre-populate port selector with each model's detected running port
+        setPortByModel((prev) => {
+          const detected: Record<string, number> = {};
+          for (const m of activeModels) {
+            if (m.running && m.model && m.port) {
+              // Match by slug: last segment of the model name, lowercased
+              const slug = m.model.split('/').pop()?.toLowerCase() ?? m.model.toLowerCase();
+              detected[slug] = m.port;
+              // Also map by the full model name in case browse uses it as key
+              detected[m.model] = m.port;
+            }
+          }
+          return { ...detected, ...prev };
+        });
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load model library');

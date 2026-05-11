@@ -43,7 +43,35 @@ export function GpuAllocation() {
       const gpuData = await gpuRes.json();
       const assignData = await assignRes.json();
       setGpus(gpuData.data?.gpus ?? gpuData.gpus ?? []);
-      setAssignments(assignData.data?.assignments ?? assignData.assignments ?? []);
+      let resolved: Assignment[] = assignData.data?.assignments ?? assignData.assignments ?? [];
+
+      // Fallback: if model_config.yml has no assignments, synthesise from running
+      // vLLM processes detected via the status endpoint (same SSH-based detection
+      // that powers the Status tab).
+      if (resolved.length === 0) {
+        try {
+          const statusRes = await fetch('/api/vllm/status');
+          if (statusRes.ok) {
+            const statusData = await statusRes.json();
+            const statusPayload = statusData.data ?? statusData;
+            const runningModels: Array<{ model: string; port: number; gpu?: string; running: boolean }> =
+              statusPayload.models ?? [];
+            resolved = runningModels
+              .filter((m) => m.running && m.model)
+              .map((m) => ({
+                model_name: m.model,
+                model_key: undefined,
+                assigned: true,
+                gpu: m.gpu ?? '?',
+                port: m.port,
+                tensor_parallel: 1,
+              }));
+          }
+        } catch {
+          // status fetch failed — leave assignments empty, not an error
+        }
+      }
+      setAssignments(resolved);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load GPU allocation');
     } finally {
