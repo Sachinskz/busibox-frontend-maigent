@@ -21,6 +21,8 @@ export interface DeployAppRequest {
   manifest: BusiboxManifest;
   environment?: 'production' | 'staging' | 'development';
   devMode?: boolean;
+  /** Per-app env vars loaded from config-api (encrypted at source, plain here for transit to deploy-api). */
+  secrets?: Record<string, string>;
 }
 
 export interface DeploymentResult {
@@ -91,7 +93,7 @@ export async function deployApp(
       githubBranch: 'main',
       githubToken: request.githubToken,
       environment: request.environment || 'production',
-      secrets: {},
+      secrets: request.secrets ?? {},
       // Local dev mode fields
       localDevDir: request.localDevDir,
       devMode: request.devMode || false,

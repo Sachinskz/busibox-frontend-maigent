@@ -15,6 +15,7 @@ import { getAuthzOptionsWithToken } from '@jazzmind/busibox-app/lib/authz/next-c
 import { ArrowLeft } from 'lucide-react';
 import { getAppConfigById } from '@jazzmind/busibox-app/lib/deploy/app-config';
 import { AppRoleManager } from '@/components/admin/AppRoleManager';
+import { AppEnvVarsManager } from '@/components/admin/AppEnvVarsManager';
 
 export const metadata = {
   title: 'App Details - Admin Portal',
@@ -160,6 +161,13 @@ export default async function AppDetailPage({ params }: PageProps) {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">App Information</h2>
               <AppForm app={transformedApp} />
             </div>
+
+            {/* Environment Variables (External apps only) */}
+            {app.type === 'EXTERNAL' && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <AppEnvVarsManager appId={appId} />
+              </div>
+            )}
 
             {/* Quick Actions */}
             {(app.type === 'LIBRARY' || app.type === 'BUILT_IN') && (

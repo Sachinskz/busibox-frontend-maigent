@@ -17,7 +17,9 @@ import { exchangeTokenZeroTrust } from '@jazzmind/busibox-app';
 import {
   getAppConfigById,
   updateAppConfig,
+  getAppEnvVars,
 } from '@jazzmind/busibox-app/lib/deploy/app-config';
+import { getConfigApiToken } from '@jazzmind/busibox-app/lib/config/client';
 
 // AuthZ service URL for token exchange
 const AUTHZ_BASE_URL = process.env.AUTHZ_BASE_URL || 'http://authz-api:8010';
@@ -66,7 +68,25 @@ export async function POST(
       // No body is fine
     }
 
-    const app = await getAppConfigById({ userId: adminUser.id, sessionJwt }, appId);
+    // Load app config and config-api token in parallel
+    let configToken: string;
+    try {
+      configToken = await getConfigApiToken(adminUser.id, sessionJwt);
+    } catch (tokenError) {
+      console.error('[API/deploy] Config API token exchange error:', tokenError);
+      return NextResponse.json(
+        { success: false, error: 'Failed to authenticate with config service' },
+        { status: 401 },
+      );
+    }
+
+    const [app, appEnvVars] = await Promise.all([
+      getAppConfigById({ userId: adminUser.id, sessionJwt }, appId),
+      getAppEnvVars(configToken, appId).catch((err) => {
+        console.warn('[API/deploy] Failed to load app env vars, deploying without them:', err);
+        return {} as Record<string, string>;
+      }),
+    ]);
 
     if (!app) {
       return NextResponse.json(
@@ -168,6 +188,7 @@ export async function POST(
         manifest: manifest,
         environment: 'production', // TODO: Support staging
         devMode: isLocalDev,
+        secrets: appEnvVars,
       }, deployToken);
 
       await updateAppConfig({ userId: adminUser.id, sessionJwt }, appId, {

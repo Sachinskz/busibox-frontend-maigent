@@ -16,7 +16,10 @@ import {
   setConfig,
   getConfigRaw,
   deleteConfig,
+  listConfigs,
+  bulkSetConfigs,
   type AppRegistryEntry,
+  type ConfigSetRequest,
 } from '../config/client';
 
 export type AppConfigType = 'BUILT_IN' | 'LIBRARY' | 'EXTERNAL' | 'INTERNAL';
@@ -154,6 +157,121 @@ async function _getAppSecret(token: string, appId: string, field: keyof typeof A
   } catch {
     return null;
   }
+}
+
+// ============================================================================
+// Per-app env var management (stored in config-api, encrypted)
+// ============================================================================
+
+const APP_ENV_VAR_CATEGORY = 'app_env_vars';
+const _envVarKey = (appId: string, varName: string) => `app.${appId}.env.${varName}`;
+const _envVarPrefix = (appId: string) => `app.${appId}.env.`;
+
+/**
+ * Extract the env var name from a config key like `app.{appId}.env.{VAR_NAME}`.
+ */
+function _envVarNameFromKey(appId: string, key: string): string | null {
+  const prefix = _envVarPrefix(appId);
+  if (!key.startsWith(prefix)) return null;
+  return key.slice(prefix.length) || null;
+}
+
+/**
+ * List all env vars configured for an app. Returns a map of VAR_NAME -> decrypted value.
+ * Non-decryptable entries are skipped silently.
+ */
+export async function getAppEnvVars(token: string, appId: string): Promise<Record<string, string>> {
+  const listing = await listConfigs(token, APP_ENV_VAR_CATEGORY);
+  const appEntries = listing.configs.filter((c) => c.key.startsWith(_envVarPrefix(appId)));
+  if (!appEntries.length) return {};
+
+  const results = await Promise.allSettled(
+    appEntries.map(async (entry) => {
+      const varName = _envVarNameFromKey(appId, entry.key);
+      if (!varName) return null;
+      const raw = await getConfigRaw(token, entry.key);
+      return [varName, raw.value] as [string, string];
+    }),
+  );
+
+  const vars: Record<string, string> = {};
+  for (const r of results) {
+    if (r.status === 'fulfilled' && r.value) {
+      const [k, v] = r.value;
+      vars[k] = v;
+    }
+  }
+  return vars;
+}
+
+/**
+ * Set (upsert) a single env var for an app. Value is stored encrypted.
+ */
+export async function setAppEnvVar(token: string, appId: string, varName: string, value: string): Promise<void> {
+  await setConfig(token, _envVarKey(appId, varName), {
+    value,
+    encrypted: true,
+    scope: 'app',
+    tier: 'app',
+    category: APP_ENV_VAR_CATEGORY,
+    description: `${varName} for ${appId}`,
+  });
+}
+
+/**
+ * Delete a single env var for an app.
+ */
+export async function deleteAppEnvVar(token: string, appId: string, varName: string): Promise<void> {
+  try {
+    await deleteConfig(token, _envVarKey(appId, varName));
+  } catch {
+    // Ignore if not found
+  }
+}
+
+/**
+ * Bulk-set env vars for an app. All values are stored encrypted.
+ * Vars not in `vars` that already exist in config-api are NOT removed — use
+ * `syncAppEnvVars` to replace-all.
+ */
+export async function setAppEnvVars(token: string, appId: string, vars: Record<string, string>): Promise<void> {
+  if (!Object.keys(vars).length) return;
+  const configs: Record<string, ConfigSetRequest> = {};
+  for (const [varName, value] of Object.entries(vars)) {
+    configs[_envVarKey(appId, varName)] = {
+      value,
+      encrypted: true,
+      scope: 'app',
+      tier: 'app',
+      category: APP_ENV_VAR_CATEGORY,
+      description: `${varName} for ${appId}`,
+    };
+  }
+  await bulkSetConfigs(token, { configs });
+}
+
+/**
+ * Replace all env vars for an app: upserts the provided vars and deletes any
+ * previously-stored vars that are no longer in the new set.
+ */
+export async function syncAppEnvVars(
+  token: string,
+  appId: string,
+  vars: Record<string, string>,
+): Promise<void> {
+  // Find existing vars to delete stale ones
+  const listing = await listConfigs(token, APP_ENV_VAR_CATEGORY);
+  const existingKeys = listing.configs
+    .map((c) => c.key)
+    .filter((k) => k.startsWith(_envVarPrefix(appId)));
+
+  const newKeys = new Set(Object.keys(vars).map((v) => _envVarKey(appId, v)));
+  const toDelete = existingKeys.filter((k) => !newKeys.has(k));
+
+  await Promise.all([
+    setAppEnvVars(token, appId, vars),
+    ...toDelete.map((k) => deleteConfig(token, k).catch(() => {})),
+  ]);
 }
 
 // Deployment metadata stored as config entries (not encrypted, not secret)
