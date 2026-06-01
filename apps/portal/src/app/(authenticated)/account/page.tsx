@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { Button, UserAvatar } from '@jazzmind/busibox-app';
 import { PasskeySettings } from '@/components/auth/PasskeySettings';
 import { ChannelLinkingSettings } from '@jazzmind/busibox-app/components/account/ChannelLinkingSettings';
+import { IntegrationsSettings } from '@jazzmind/busibox-app/components/account/IntegrationsSettings';
 import { useSession } from '@jazzmind/busibox-app/components/auth/SessionProvider';
 import { useCustomization } from '@jazzmind/busibox-app';
 
@@ -309,6 +310,11 @@ export default function AccountPage() {
         {/* Channel Linking Settings */}
         <div className="bg-white rounded-lg shadow-md p-6 mt-6">
           <ChannelLinkingSettings />
+        </div>
+
+        {/* Integrations (Google / Microsoft OAuth) */}
+        <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+          <IntegrationsSettings />
         </div>
       </main>
     </div>
