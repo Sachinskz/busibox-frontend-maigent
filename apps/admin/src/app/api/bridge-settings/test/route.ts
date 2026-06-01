@@ -15,7 +15,7 @@ import {
   type BridgeConfig,
 } from '@jazzmind/busibox-app/lib/bridge/config';
 
-type ConnectivityTarget = 'bridge' | 'agent-roundtrip' | 'telegram' | 'discord' | 'whatsapp' | 'all';
+type ConnectivityTarget = 'bridge' | 'agent-roundtrip' | 'telegram' | 'discord' | 'whatsapp' | 'imap' | 'all';
 
 type ConnectivityResult = {
   target: Exclude<ConnectivityTarget, 'all'>;
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     const target = String(body.target || '').toLowerCase() as ConnectivityTarget;
-    if (!['bridge', 'agent-roundtrip', 'telegram', 'discord', 'whatsapp', 'all'].includes(target)) {
+    if (!['bridge', 'agent-roundtrip', 'telegram', 'discord', 'whatsapp', 'imap', 'all'].includes(target)) {
       return apiError('Invalid test target', 400);
     }
 
@@ -226,6 +226,26 @@ export async function POST(request: NextRequest) {
         };
       }
 
+      if (singleTarget === 'imap') {
+        const bridgeUrl = getBridgeApiUrl();
+        const resp = await fetch(`${bridgeUrl}/api/v1/test/imap`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+        });
+        const payload = await resp.json().catch(() => ({}));
+        if (!resp.ok || payload?.ok !== true) {
+          const msg = extractErrorMessage(payload, 'IMAP connection failed');
+          return { target: singleTarget, success: false, message: msg };
+        }
+        return {
+          target: singleTarget,
+          success: true,
+          message: payload.message || 'IMAP connection verified.',
+          details: { latency_ms: payload.latency_ms ?? null },
+        };
+      }
+
       // singleTarget === 'whatsapp'
       const accessToken = mergedConfig.whatsappAccessToken || '';
       const phoneNumberId = mergedConfig.whatsappPhoneNumberId || '';
@@ -278,6 +298,7 @@ export async function POST(request: NextRequest) {
       if (mergedConfig.telegramEnabled) targets.push('telegram');
       if (mergedConfig.discordEnabled) targets.push('discord');
       if (mergedConfig.whatsappEnabled) targets.push('whatsapp');
+      if (mergedConfig.emailInboundEnabled) targets.push('imap');
 
       const results: ConnectivityResult[] = [];
       for (const t of targets) {

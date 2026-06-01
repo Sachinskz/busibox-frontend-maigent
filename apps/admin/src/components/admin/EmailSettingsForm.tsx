@@ -34,6 +34,7 @@ export interface ImapSettingsData {
   imapFolder: string | null;
   emailInboundPollInterval: number | null;
   emailAllowedSenders: string | null;
+  emailAgentId?: string | null;
 }
 
 interface EmailSettingsFormProps {
@@ -90,6 +91,56 @@ export function EmailSettingsForm({ settings, activeProvider, imapSettings, onSu
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [showPasswords, setShowPasswords] = useState<Set<string>>(new Set());
+  const [agentOptions, setAgentOptions] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    fetch('/api/agents?limit=200', { credentials: 'include' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((result) => {
+        if (!result) return;
+        const raw = result.data;
+        const list: unknown[] = Array.isArray(raw) ? raw : (Array.isArray(raw?.agents) ? raw.agents : []);
+        setAgentOptions(
+          list
+            .map((a: Record<string, unknown>) => {
+              const slug = String(a.name ?? '').trim();
+              const display = String(a.display_name ?? a.name ?? slug).trim();
+              return slug ? { id: slug, name: display } : null;
+            })
+            .filter((v): v is { id: string; name: string } => Boolean(v))
+        );
+      })
+      .catch(() => {});
+  }, []);
+
+  // ── Inbox viewer ─────────────────────────────────────────────────────────
+  const [inboxOpen, setInboxOpen] = useState(false);
+  const [inboxLoading, setInboxLoading] = useState(false);
+  const [inboxMessages, setInboxMessages] = useState<{ id: string; subject: string; from: string; date: string; seen: boolean }[] | null>(null);
+  const [inboxError, setInboxError] = useState<string | null>(null);
+
+  const loadInbox = async () => {
+    setInboxLoading(true);
+    setInboxError(null);
+    try {
+      const resp = await fetch('/api/bridge-settings/inbox?limit=20');
+      const data = await resp.json();
+      if (!resp.ok) {
+        setInboxError(data?.error || 'Failed to load inbox');
+        return;
+      }
+      setInboxMessages(data?.data?.messages ?? []);
+    } catch {
+      setInboxError('Failed to load inbox');
+    } finally {
+      setInboxLoading(false);
+    }
+  };
+
+  const toggleInbox = () => {
+    if (!inboxOpen && !inboxMessages) loadInbox();
+    setInboxOpen((v) => !v);
+  };
 
   const togglePasswordVisibility = (key: string) => {
     setShowPasswords((prev) => {
@@ -162,6 +213,65 @@ export function EmailSettingsForm({ settings, activeProvider, imapSettings, onSu
 
   const handleImapBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     imap.triggerBlurSave(e.target);
+  };
+
+  // ── Test IMAP connection ──────────────────────────────────────────────────
+  const [imapTesting, setImapTesting] = useState(false);
+  const [imapTestResult, setImapTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  const handleTestImap = async () => {
+    setImapTesting(true);
+    setImapTestResult(null);
+    try {
+      const response = await fetch('/api/bridge-settings/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target: 'imap' }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        const msg = data?.error || data?.data?.message || 'IMAP connection failed';
+        setImapTestResult({ ok: false, message: msg });
+      } else {
+        const msg = data?.data?.message || 'IMAP connection verified.';
+        setImapTestResult({ ok: true, message: msg });
+      }
+      setTimeout(() => setImapTestResult(null), 10000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'IMAP test failed';
+      setImapTestResult({ ok: false, message: msg });
+    } finally {
+      setImapTesting(false);
+    }
+  };
+
+  // ── Send test to inbound (SMTP → IMAP address) ───────────────────────────
+  const [sendToSelfTesting, setSendToSelfTesting] = useState(false);
+  const [sendToSelfResult, setSendToSelfResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  const handleSendToSelf = async () => {
+    setSendToSelfTesting(true);
+    setSendToSelfResult(null);
+    try {
+      const bridgeResp = await fetch('/api/bridge-settings/inbox-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await bridgeResp.json();
+      if (!bridgeResp.ok) {
+        const msg = data?.error || data?.data?.message || 'Send failed';
+        setSendToSelfResult({ ok: false, message: msg });
+      } else {
+        const msg = data?.data?.message || 'Test email sent to inbound address.';
+        setSendToSelfResult({ ok: true, message: msg });
+      }
+      setTimeout(() => setSendToSelfResult(null), 10000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Send failed';
+      setSendToSelfResult({ ok: false, message: msg });
+    } finally {
+      setSendToSelfTesting(false);
+    }
   };
 
   // ── Test email (still manual) ─────────────────────────────────────────────
@@ -518,7 +628,125 @@ export function EmailSettingsForm({ settings, activeProvider, imapSettings, onSu
             />
           </div>
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Email Inbound Agent</label>
+          <select
+            value={imapData.emailAgentId || ''}
+            onChange={(e) => {
+              const next = { ...imapData, emailAgentId: e.target.value || null };
+              setImapData(next);
+              imap.triggerSave(next, e.target);
+            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+          >
+            <option value="">Use default agent</option>
+            {agentOptions.map((a) => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-gray-500">Agent to handle inbound emails. Defaults to the global default agent.</p>
+        </div>
+        {/* IMAP test buttons */}
+        <div className="pt-4 flex flex-col gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleTestImap}
+              disabled={imapTesting || saving || !imapData.emailInboundEnabled}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {imapTesting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              {imapTesting ? 'Testing...' : 'Test IMAP Connection'}
+            </button>
+            <button
+              type="button"
+              onClick={handleSendToSelf}
+              disabled={sendToSelfTesting || saving || !imapData.emailInboundEnabled}
+              title="Send a test email via outbound SMTP to the IMAP inbound address to verify the full loop"
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {sendToSelfTesting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {sendToSelfTesting ? 'Sending...' : 'Send Test to Inbound'}
+            </button>
+          </div>
+          {imapTestResult && (
+            <div className={`rounded px-3 py-2 text-xs ${imapTestResult.ok ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+              {imapTestResult.message}
+            </div>
+          )}
+          {sendToSelfResult && (
+            <div className={`rounded px-3 py-2 text-xs ${sendToSelfResult.ok ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+              {sendToSelfResult.message}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Inbox Viewer */}
+      {imapData.emailInboundEnabled && (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <button
+            type="button"
+            onClick={toggleInbox}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg"
+          >
+            <span>📬 Recent Inbound Messages</span>
+            <span className="text-gray-400 text-xs">{inboxOpen ? '▲ collapse' : '▼ expand'}</span>
+          </button>
+          {inboxOpen && (
+            <div className="border-t border-gray-100 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={loadInbox}
+                  disabled={inboxLoading}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {inboxLoading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                  Refresh
+                </button>
+              </div>
+              {inboxError && (
+                <div className="text-xs text-red-600 bg-red-50 rounded px-3 py-2 mb-2">{inboxError}</div>
+              )}
+              {inboxLoading && !inboxMessages && (
+                <div className="text-xs text-gray-500 py-4 text-center">Loading inbox...</div>
+              )}
+              {inboxMessages && inboxMessages.length === 0 && (
+                <div className="text-xs text-gray-500 py-4 text-center">No messages in inbox.</div>
+              )}
+              {inboxMessages && inboxMessages.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead>
+                      <tr className="border-b border-gray-100 text-gray-500">
+                        <th className="pb-1 pr-3 font-medium">From</th>
+                        <th className="pb-1 pr-3 font-medium">Subject</th>
+                        <th className="pb-1 pr-3 font-medium whitespace-nowrap">Date</th>
+                        <th className="pb-1 font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {inboxMessages.map((msg) => (
+                        <tr key={msg.id} className="border-b border-gray-50 hover:bg-gray-50">
+                          <td className="py-1.5 pr-3 max-w-[160px] truncate text-gray-700">{msg.from}</td>
+                          <td className={`py-1.5 pr-3 max-w-[240px] truncate ${msg.seen ? 'text-gray-500' : 'font-medium text-gray-900'}`}>{msg.subject}</td>
+                          <td className="py-1.5 pr-3 whitespace-nowrap text-gray-500">{msg.date ? new Date(msg.date).toLocaleString() : '—'}</td>
+                          <td className="py-1.5">
+                            <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${msg.seen ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700'}`}>
+                              {msg.seen ? 'read' : 'unread'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Status and Test */}
       {error && (

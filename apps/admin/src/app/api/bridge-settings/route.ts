@@ -52,6 +52,7 @@ function buildBridgeReloadPayload(config: BridgeConfig): Record<string, string> 
   add('SIGNAL_AGENT_ID', config.signalAgentId);
   add('DISCORD_AGENT_ID', config.discordAgentId);
   add('WHATSAPP_AGENT_ID', config.whatsappAgentId);
+  add('EMAIL_AGENT_ID', config.emailAgentId);
   return payload;
 }
 
@@ -158,6 +159,7 @@ export async function PATCH(request: NextRequest) {
     if ('signalAgentId' in body) updates.signalAgentId = asNullableString(body.signalAgentId);
     if ('discordAgentId' in body) updates.discordAgentId = asNullableString(body.discordAgentId);
     if ('whatsappAgentId' in body) updates.whatsappAgentId = asNullableString(body.whatsappAgentId);
+    if ('emailAgentId' in body) updates.emailAgentId = asNullableString(body.emailAgentId);
 
     if ('emailInboundEnabled' in body) updates.emailInboundEnabled = asBool(body.emailInboundEnabled);
     if ('imapHost' in body) updates.imapHost = asNullableString(body.imapHost);

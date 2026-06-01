@@ -47,6 +47,7 @@ export type BridgeConfig = {
   signalAgentId: string | null;
   discordAgentId: string | null;
   whatsappAgentId: string | null;
+  emailAgentId: string | null;
 
   emailInboundEnabled: boolean;
   imapHost: string | null;
@@ -88,6 +89,7 @@ const DEFAULT_CONFIG: BridgeConfig = {
   signalAgentId: null,
   discordAgentId: null,
   whatsappAgentId: null,
+  emailAgentId: null,
 
   emailInboundEnabled: false,
   imapHost: null,
@@ -129,6 +131,7 @@ const FIELD_TO_KEY: Record<keyof BridgeConfig, string> = {
   signalAgentId: 'SIGNAL_AGENT_ID',
   discordAgentId: 'DISCORD_AGENT_ID',
   whatsappAgentId: 'WHATSAPP_AGENT_ID',
+  emailAgentId: 'EMAIL_AGENT_ID',
 
   emailInboundEnabled: 'EMAIL_INBOUND_ENABLED',
   imapHost: 'IMAP_HOST',

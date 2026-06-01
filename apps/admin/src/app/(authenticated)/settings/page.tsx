@@ -395,6 +395,7 @@ export default function AdminSettingsPage() {
                         imapFolder: (bridgeSettings as any).imapFolder ?? null,
                         emailInboundPollInterval: (bridgeSettings as any).emailInboundPollInterval ?? null,
                         emailAllowedSenders: (bridgeSettings as any).emailAllowedSenders ?? null,
+                        emailAgentId: (bridgeSettings as any).emailAgentId ?? null,
                       } as ImapSettingsData : null}
                     />
                   ) : (
