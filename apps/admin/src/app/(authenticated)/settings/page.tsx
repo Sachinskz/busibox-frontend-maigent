@@ -15,6 +15,7 @@ import { DataSettingsForm } from '@/components/admin/DataSettingsForm';
 import { AIModelsSettings } from '@/components/admin/AIModelsSettings';
 import { EmailSettingsForm, type EmailSettingsData, type ImapSettingsData } from '@/components/admin/EmailSettingsForm';
 import { BridgeSettingsForm, type BridgeSettingsData } from '@/components/admin/BridgeSettingsForm';
+import { OAuthSettingsForm } from '@/components/admin/OAuthSettingsForm';
 import { useSession } from '@jazzmind/busibox-app/components/auth/SessionProvider';
 import { useCustomization } from '@jazzmind/busibox-app';
 import { useCrossAppApiPath } from '@jazzmind/busibox-app/contexts';
@@ -38,9 +39,10 @@ import {
   MonitorPlay,
   MessageSquare,
   Hash,
+  Link,
 } from 'lucide-react';
 
-type Tab = 'ai-models' | 'branding' | 'bridge' | 'data';
+type Tab = 'ai-models' | 'branding' | 'bridge' | 'data' | 'integrations';
 type AISubTab = 'status' | 'mapping' | 'models' | 'playgrounds';
 type BrandingSubTab = 'identity' | 'colors' | 'location' | 'contact' | 'advanced';
 type BridgeSubTab = 'status' | 'email' | 'signal' | 'telegram' | 'discord' | 'whatsapp';
@@ -94,7 +96,7 @@ export default function AdminSettingsPage() {
     if (typeof window !== 'undefined') {
       const p = new URLSearchParams(window.location.search);
       const t = p.get('tab');
-      if (t === 'ai-models' || t === 'branding' || t === 'bridge' || t === 'data') return t;
+      if (t === 'ai-models' || t === 'branding' || t === 'bridge' || t === 'data' || t === 'integrations') return t;
       if (t === 'chat') return 'ai-models';
       if (t === 'email') return 'bridge';
     }
@@ -274,6 +276,7 @@ export default function AdminSettingsPage() {
               { id: 'ai-models' as Tab, icon: Cpu, label: 'AI Models' },
               { id: 'branding' as Tab, icon: Palette, label: 'Branding' },
               { id: 'bridge' as Tab, icon: Radio, label: 'Bridge' },
+              { id: 'integrations' as Tab, icon: Link, label: 'Integrations' },
               { id: 'data' as Tab, icon: Cog, label: 'Data Processing' },
             ] as const).map(({ id, icon: Icon, label }) => (
               <button
@@ -425,6 +428,19 @@ export default function AdminSettingsPage() {
                       <p className="text-gray-600">Loading bridge settings...</p>
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* ── OAuth Integrations ─────────────────────────────────────────────── */}
+            {activeTab === 'integrations' && (
+              <div>
+                <SectionBanner
+                  title="OAuth Integrations"
+                  desc="Configure Google and Microsoft OAuth apps so users can connect their personal accounts for calendar and email access by AI agents."
+                />
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                  <OAuthSettingsForm />
                 </div>
               </div>
             )}
