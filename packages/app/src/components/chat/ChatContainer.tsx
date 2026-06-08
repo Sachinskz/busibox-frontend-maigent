@@ -457,6 +457,7 @@ export function ChatContainer({
           agentName: result.agentName,
           thoughts: result.thoughts.length > 0 ? result.thoughts : undefined,
           parts: finalParts,
+          citations: result.citations.length > 0 ? result.citations : undefined,
           createdAt: new Date(),
         };
 

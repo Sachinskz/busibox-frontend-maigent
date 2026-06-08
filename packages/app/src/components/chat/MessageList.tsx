@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { format } from 'date-fns';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -173,6 +173,15 @@ function TableRow({ children, ...props }: React.HTMLAttributes<HTMLTableRowEleme
     </tr>
   );
 }
+
+/**
+ * Preserves doc: pseudo-URLs so CitationLink can handle them.
+ * react-markdown v10 strips any protocol not in the https/http/mailto allowlist;
+ * without this override every doc: href would be rewritten to '' and fall back
+ * to a plain <a> pointing at the current page.
+ */
+const citationUrlTransform = (url: string): string =>
+  url.startsWith('doc:') ? url : defaultUrlTransform(url);
 
 const markdownComponents = {
   a: CitationLink,
@@ -756,6 +765,7 @@ export function MessageList({
                                 remarkPlugins={[remarkGfm, remarkMath]}
                                 rehypePlugins={[rehypeKatex]}
                                 components={markdownComponents}
+                                urlTransform={citationUrlTransform}
                               >
                                 {preprocessLatex(displayContent)}
                               </ReactMarkdown>
@@ -786,6 +796,7 @@ export function MessageList({
                     remarkPlugins={[remarkGfm, remarkMath]}
                     rehypePlugins={[rehypeKatex]}
                     components={markdownComponents}
+                    urlTransform={citationUrlTransform}
                   >
                     {preprocessLatex(message.content)}
                   </ReactMarkdown>
@@ -991,6 +1002,7 @@ export function MessageList({
                     remarkPlugins={[remarkGfm, remarkMath]}
                     rehypePlugins={[rehypeKatex]}
                     components={markdownComponents}
+                    urlTransform={citationUrlTransform}
                   >
                     {preprocessLatex(streamingContent)}
                   </ReactMarkdown>
