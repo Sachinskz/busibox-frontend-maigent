@@ -147,7 +147,8 @@ export default function LibraryDetailPage({ params }: PageProps) {
 
       if (rolesRes.ok) {
         const rolesData = await rolesRes.json();
-        setAllRoles(rolesData?.data?.roles || rolesData?.roles || []);
+        const fetchedRoles = rolesData?.data?.roles || rolesData?.roles || [];
+        setAllRoles(fetchedRoles.filter((r: { id: string; name: string }) => !r.name.startsWith('app:')));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load library');

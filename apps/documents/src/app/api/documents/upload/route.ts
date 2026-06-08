@@ -10,6 +10,9 @@ import { requireAuth, apiError, apiSuccess } from '@jazzmind/busibox-app/lib/nex
 import { dataFetch, setSessionJwtForUser } from '@jazzmind/busibox-app/lib/data/app-client';
 import { canUploadToLibrary } from '@jazzmind/busibox-app/lib/data/libraries';
 import { getDataApiTokenForSettings, getDataSettings } from '@jazzmind/busibox-app/lib/data/settings';
+import { getResourceRoles, getUserRoles } from '@jazzmind/busibox-app';
+import { getAuthzOptionsWithToken } from '@jazzmind/busibox-app/lib/authz/next-client';
+import { getDataApiUrl } from '@jazzmind/busibox-app/lib/next/api-url';
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,6 +73,47 @@ export async function POST(request: NextRequest) {
     const { accessToken: settingsToken } = await getDataApiTokenForSettings(user.id, sessionJwt);
     const settings = await getDataSettings(settingsToken);
 
+    // For non-personal shared libraries, resolve authz role bindings so the
+    // uploaded document gets visibility=shared + document_roles set correctly.
+    let uploadVisibility: 'personal' | 'shared' = 'personal';
+    let uploadRoleIds: string[] = [];
+
+    if (libraryId) {
+      const dataApiUrl = getDataApiUrl();
+      const libResponse = await fetch(`${dataApiUrl}/libraries/${libraryId}`, {
+        headers: { Authorization: `Bearer ${settingsToken}` },
+      });
+
+      if (libResponse.ok) {
+        const libData = await libResponse.json();
+        const targetLib = libData.data || libData;
+        const isPersonal = targetLib.isPersonal ?? targetLib.is_personal ?? false;
+
+        if (!isPersonal) {
+          uploadVisibility = 'shared';
+          const authzOptions = await getAuthzOptionsWithToken(sessionJwt);
+          try {
+            const roleBindings = await getResourceRoles('library', libraryId, authzOptions);
+            uploadRoleIds = roleBindings.map((r: { id: string }) => r.id);
+          } catch (e) {
+            console.error('[API] Document upload - failed to get library roles:', e);
+          }
+          // Fall back to the user's own roles if the library has no explicit role bindings
+          if (uploadRoleIds.length === 0) {
+            try {
+              const userRoles = await getUserRoles(user.id, authzOptions);
+              uploadRoleIds = userRoles.map((r: { id: string }) => r.id);
+            } catch (e) {
+              console.error('[API] Document upload - failed to get user roles:', e);
+            }
+          }
+          if (uploadRoleIds.length === 0) {
+            return apiError('Unable to determine role bindings for the target library or the current user.', 400);
+          }
+        }
+      }
+    }
+
     // Forward to data-api
     const ingestFormData = new FormData();
     ingestFormData.append('file', file);
@@ -77,6 +121,13 @@ export async function POST(request: NextRequest) {
     // Add library ID if specified
     if (libraryId) {
       ingestFormData.append('library_id', libraryId);
+    }
+
+    // Propagate visibility and role_ids so documents in shared libraries are
+    // immediately visible to all role-holders under PostgreSQL RLS.
+    ingestFormData.append('visibility', uploadVisibility);
+    if (uploadVisibility === 'shared' && uploadRoleIds.length > 0) {
+      ingestFormData.append('role_ids', uploadRoleIds.join(','));
     }
     
     // Add metadata including processing options

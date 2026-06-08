@@ -47,7 +47,8 @@ export function CreateLibraryModal({ isOpen, onClose, onCreated }: CreateLibrary
       const response = await fetch('/api/roles');
       if (response.ok) {
         const data = await response.json();
-        setRoles(data?.data?.roles || data?.roles || []);
+        const allRoles = data?.data?.roles || data?.roles || [];
+        setRoles(allRoles.filter((r: Role) => !r.name.startsWith('app:')));
       }
     } catch (err) {
       console.error('Failed to load roles:', err);
