@@ -47,6 +47,53 @@ const PROVIDER_CONFIGS: Record<string, { name: string; displayName: string; requ
   ],
 };
 
+type SettingFieldType = 'boolean' | 'text' | 'password' | 'url';
+
+interface SettingField {
+  key: string;
+  label: string;
+  type: SettingFieldType;
+  description?: string;
+  placeholder?: string;
+}
+
+// Define settings configurations for tools that have non-provider settings
+const SETTINGS_CONFIGS: Record<string, SettingField[]> = {
+  web_scraper: [
+    {
+      key: 'camoufox_enabled',
+      label: 'Enable Camoufox (Tier 3)',
+      type: 'boolean',
+      description: 'Use the Camoufox stealth browser for sites that block Playwright. Requires the camoufox package to be installed on the server.',
+    },
+    {
+      key: 'proxy_url',
+      label: 'Proxy URL',
+      type: 'url',
+      placeholder: 'http://user:pass@proxy.example.com:8080',
+      description: 'Proxy server URL for scraping requests. Leave empty for direct connections.',
+    },
+    {
+      key: 'proxy_username',
+      label: 'Proxy Username',
+      type: 'text',
+      placeholder: 'Optional — overrides credentials in the proxy URL',
+    },
+    {
+      key: 'proxy_password',
+      label: 'Proxy Password',
+      type: 'password',
+      placeholder: 'Optional — overrides credentials in the proxy URL',
+    },
+    {
+      key: 'proxy_rotate',
+      label: 'Rotate Proxy Identity',
+      type: 'boolean',
+      description: 'Request a fresh proxy IP for each scrape request (requires a rotating proxy service).',
+    },
+  ],
+};
+
 const SCOPE_INFO: Record<ConfigScope, { label: string; description: string; icon: React.ReactNode }> = {
   global: {
     label: 'Global',
@@ -181,10 +228,24 @@ export function ToolConfigPanel({ tool, isAdmin = false }: ToolConfigPanelProps)
 
   function getProvidersForTool(tool: Tool) {
     // Only show providers for web_search, not document_search
-    if (tool.name === 'web_search' || tool.entrypoint.includes('web_search')) {
+    if (tool.name === 'web_search' || tool.entrypoint?.includes('web_search')) {
       return PROVIDER_CONFIGS.web_search || [];
     }
     return [];
+  }
+
+  function getSettingsForTool(tool: Tool): SettingField[] {
+    return SETTINGS_CONFIGS[tool.name] || [];
+  }
+
+  function updateSetting(key: string, value: any) {
+    setConfig(prev => ({
+      ...prev,
+      settings: {
+        ...(prev.settings || {}),
+        [key]: value,
+      },
+    }));
   }
 
   async function handleSave() {
@@ -305,6 +366,7 @@ export function ToolConfigPanel({ tool, isAdmin = false }: ToolConfigPanelProps)
   }
 
   const providers = getProvidersForTool(tool);
+  const settingFields = getSettingsForTool(tool);
   const availableScopes: ConfigScope[] = isAdmin 
     ? ['global', 'agent', 'personal'] 
     : ['agent', 'personal'];
@@ -580,7 +642,69 @@ export function ToolConfigPanel({ tool, isAdmin = false }: ToolConfigPanelProps)
             </div>
           )}
 
-          {providers.length === 0 && (
+          {/* Tool-specific settings (e.g. web_scraper proxy / camoufox) */}
+          {settingFields.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                Tool Settings
+              </h3>
+              <div className="space-y-4">
+                {settingFields.map(field => {
+                  const currentValue = config.settings?.[field.key];
+                  return (
+                    <div key={field.key}>
+                      {field.type === 'boolean' ? (
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => updateSetting(field.key, !currentValue)}
+                            className={`relative mt-0.5 inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                              currentValue ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
+                            }`}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                currentValue ? 'translate-x-4' : 'translate-x-0'
+                              }`}
+                            />
+                          </button>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {field.label}
+                            </div>
+                            {field.description && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                {field.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            {field.label}
+                          </label>
+                          {field.description && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+                              {field.description}
+                            </p>
+                          )}
+                          <input
+                            type={field.type === 'password' ? 'password' : 'text'}
+                            value={currentValue ?? ''}
+                            onChange={e => updateSetting(field.key, e.target.value || undefined)}
+                            placeholder={field.placeholder}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {providers.length === 0 && settingFields.length === 0 && (
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center text-gray-500 dark:text-gray-400">
               <p>No configurable provider options for this tool.</p>
               <p className="text-sm mt-1">You can still enable/disable the tool above.</p>
