@@ -16,6 +16,28 @@
   --busibox-accent: #4a7c7c;
   --busibox-gray: #f5f5f5;
 
+  /* Cashman brand tokens — used by apps/chat Cashman-branded UI */
+  --cashman-bg: #f8f9fa;
+  --cashman-surface: #ffffff;
+  --cashman-surface-alt: #fbfbfb;
+  --cashman-border: #ebebeb;
+  --cashman-border-strong: #dbeaea;
+  --cashman-text: #101828;
+  --cashman-text-body: #393a3d;
+  --cashman-text-muted: #6b6c72;
+  --cashman-text-subtle: #9ca3af;
+  --cashman-teal: #068284;
+  --cashman-teal-dark: #056870;
+  --cashman-teal-light: #e6f4f4;
+  --cashman-teal-tint: #f5fbfb;
+  --cashman-teal-border: #b8dede;
+  --cashman-teal-muted: #94b8b9;
+  --cashman-green-dark: #0f3e18;
+  --cashman-success: #059669;
+  --cashman-error: #b91c1c;
+  --cashman-error-tint: #fef2f2;
+  --cashman-error-text: #7f1d1d;
+
   /* Additional semantic colors for light mode */
   --card-bg: #ffffff;
   --card-border: #e5e7eb;
@@ -66,6 +88,28 @@
   --busibox-light-green: #4a7c7c;
   --busibox-accent: #5a8c8c;
   --busibox-gray: #1f2937;
+
+  /* Cashman brand tokens — dark variant */
+  --cashman-bg: #0b1220;
+  --cashman-surface: #131a2c;
+  --cashman-surface-alt: #172033;
+  --cashman-border: #26314a;
+  --cashman-border-strong: #334155;
+  --cashman-text: #f1f5f9;
+  --cashman-text-body: #cbd5e1;
+  --cashman-text-muted: #94a3b8;
+  --cashman-text-subtle: #64748b;
+  --cashman-teal: #2dd4bf;
+  --cashman-teal-dark: #5eead4;
+  --cashman-teal-light: rgba(45, 212, 191, 0.16);
+  --cashman-teal-tint: rgba(45, 212, 191, 0.08);
+  --cashman-teal-border: rgba(45, 212, 191, 0.35);
+  --cashman-teal-muted: rgba(45, 212, 191, 0.55);
+  --cashman-green-dark: #0f3e18;
+  --cashman-success: #34d399;
+  --cashman-error: #f87171;
+  --cashman-error-tint: rgba(248, 113, 113, 0.12);
+  --cashman-error-text: #fca5a5;
 
   /* Additional semantic colors for dark mode */
   --card-bg: #1f2937;

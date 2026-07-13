@@ -145,10 +145,10 @@ export function CashmanSidebar({
 
   return (
     <aside
-      className="relative flex h-full flex-shrink-0 flex-col border-r bg-white"
+      className="relative flex h-full flex-shrink-0 flex-col border-r bg-[var(--cashman-surface)]"
       style={{
         width,
-        borderColor: '#ebebeb',
+        borderColor: 'var(--cashman-border)',
         transition: dragging ? 'none' : `width ${DURATION}ms ${EASE}`,
         // overflow left visible so tooltips can escape to the right; internal
         // scroll is handled by the nested list container below
@@ -158,7 +158,7 @@ export function CashmanSidebar({
       <div
         className="flex h-12 items-center justify-between border-b"
         style={{
-          borderColor: '#ebebeb',
+          borderColor: 'var(--cashman-border)',
           padding: collapsed ? '0 12px' : '0 16px',
           transition: `padding ${DURATION}ms ${EASE}`,
         }}
@@ -172,10 +172,10 @@ export function CashmanSidebar({
             whiteSpace: 'nowrap',
           }}
         >
-          <Sparkles className="h-5 w-5 flex-shrink-0" style={{ color: '#068284' }} />
+          <Sparkles className="h-5 w-5 flex-shrink-0" style={{ color: 'var(--cashman-teal)' }} />
           <span
             className="text-[16px] font-bold tracking-wider"
-            style={{ color: '#101828' }}
+            style={{ color: 'var(--cashman-text)' }}
           >
             CASHMAN AI
           </span>
@@ -185,8 +185,8 @@ export function CashmanSidebar({
           type="button"
           onClick={onToggleCollapsed}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] text-white shadow-sm outline-none transition-colors hover:brightness-110 focus-visible:ring-2 focus-visible:ring-[#068284]/40"
-          style={{ backgroundColor: '#068284' }}
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] text-white shadow-sm outline-none transition-colors hover:brightness-110 focus-visible:ring-2 focus-visible:ring-[var(--cashman-teal)]/40"
+          style={{ backgroundColor: 'var(--cashman-teal)' }}
         >
           {collapsed ? (
             <ChevronsRight className="h-4 w-4" />
@@ -213,7 +213,7 @@ export function CashmanSidebar({
               height: 36,
               padding: collapsed ? 0 : '0 12px',
               gap: collapsed ? 0 : 8,
-              backgroundColor: '#068284',
+              backgroundColor: 'var(--cashman-teal)',
               transition: `all ${DURATION}ms ${EASE}, transform 150ms`,
               boxShadow: '0 1px 3px rgba(6,130,132,0.35)',
             }}
@@ -236,11 +236,11 @@ export function CashmanSidebar({
           transition: `padding ${DURATION}ms ${EASE}`,
         }}
       >
-        <MessageSquare className="h-5 w-5 flex-shrink-0" style={{ color: '#393a3d' }} />
+        <MessageSquare className="h-5 w-5 flex-shrink-0" style={{ color: 'var(--cashman-text-body)' }} />
         <span
           className="text-base font-medium"
           style={{
-            color: '#393a3d',
+            color: 'var(--cashman-text-body)',
             opacity: collapsed ? 0 : 1,
             maxWidth: collapsed ? 0 : 200,
             overflow: 'hidden',
@@ -260,7 +260,7 @@ export function CashmanSidebar({
         }}
       >
         {conversations.length === 0 && !collapsed ? (
-          <p className="px-2 py-3 text-sm" style={{ color: '#6b6c72' }}>
+          <p className="px-2 py-3 text-sm" style={{ color: 'var(--cashman-text-muted)' }}>
             No conversations yet
           </p>
         ) : (
@@ -279,13 +279,13 @@ export function CashmanSidebar({
                     padding: collapsed ? 0 : '0 9px',
                     justifyContent: collapsed ? 'center' : 'flex-start',
                     borderRadius: 8,
-                    color: isActive ? '#056870' : '#6b6c72',
-                    backgroundColor: isActive ? '#e6f4f4' : 'transparent',
-                    border: `1px solid ${isActive ? '#b8dede' : 'transparent'}`,
+                    color: isActive ? 'var(--cashman-teal-dark)' : 'var(--cashman-text-muted)',
+                    backgroundColor: isActive ? 'var(--cashman-teal-light)' : 'transparent',
+                    border: `1px solid ${isActive ? 'var(--cashman-teal-border)' : 'transparent'}`,
                     transition: `all ${DURATION}ms ${EASE}, background-color 150ms, color 150ms`,
                   }}
                   onMouseEnter={(e) => {
-                    if (!isActive) e.currentTarget.style.backgroundColor = '#f5fbfb';
+                    if (!isActive) e.currentTarget.style.backgroundColor = 'var(--cashman-teal-tint)';
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
@@ -313,24 +313,24 @@ export function CashmanSidebar({
                       <div className="flex items-center gap-2 pb-1">
                         <MessageSquare
                           className="h-4 w-4 flex-shrink-0"
-                          style={{ color: '#068284' }}
+                          style={{ color: 'var(--cashman-teal)' }}
                         />
                         <span
                           className="text-[10px] font-bold uppercase tracking-wider"
-                          style={{ color: '#9ca3af', letterSpacing: '0.08em' }}
+                          style={{ color: 'var(--cashman-text-subtle)', letterSpacing: '0.08em' }}
                         >
                           Conversation
                         </span>
                       </div>
                       <p
                         className="text-sm font-semibold leading-[20px]"
-                        style={{ color: '#101828' }}
+                        style={{ color: 'var(--cashman-text)' }}
                       >
                         {conv.title || 'New Conversation'}
                       </p>
                       <p
                         className="pt-1 text-xs"
-                        style={{ color: '#6b6c72' }}
+                        style={{ color: 'var(--cashman-text-muted)' }}
                       >
                         {conv.messageCount
                           ? `${conv.messageCount} message${conv.messageCount === 1 ? '' : 's'}`
@@ -353,8 +353,8 @@ export function CashmanSidebar({
         <div
           className="pointer-events-none border-t px-3 py-2 text-[10px] italic"
           style={{
-            borderColor: '#ebebeb',
-            color: '#9ca3af',
+            borderColor: 'var(--cashman-border)',
+            color: 'var(--cashman-text-subtle)',
             transition: `opacity ${DURATION}ms ${EASE}`,
           }}
         >
@@ -378,7 +378,7 @@ export function CashmanSidebar({
           <span
             className="pointer-events-none block h-full w-[2px]"
             style={{
-              backgroundColor: dragging ? '#068284' : 'transparent',
+              backgroundColor: dragging ? 'var(--cashman-teal)' : 'transparent',
               transition: 'background-color 150ms',
             }}
           />
@@ -386,7 +386,7 @@ export function CashmanSidebar({
             aria-hidden
             className="pointer-events-none absolute h-8 w-[3px] rounded-full opacity-0 transition-opacity group-hover:opacity-70"
             style={{
-              backgroundColor: dragging ? '#068284' : '#94b8b9',
+              backgroundColor: dragging ? 'var(--cashman-teal)' : 'var(--cashman-teal-muted)',
               opacity: dragging ? 1 : undefined,
             }}
           />

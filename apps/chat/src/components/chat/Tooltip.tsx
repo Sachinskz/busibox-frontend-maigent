@@ -68,11 +68,11 @@ export function Tooltip({ label, preview, side = 'top', children }: TooltipProps
         <span
           role="tooltip"
           aria-hidden={!open}
-          className="pointer-events-none absolute z-50 rounded-lg border bg-white text-left shadow-lg"
+          className="pointer-events-none absolute z-50 rounded-lg border bg-[var(--cashman-surface)] text-left shadow-lg"
           style={{
             ...positionStyle,
-            borderColor: '#ebebeb',
-            color: '#101828',
+            borderColor: 'var(--cashman-border)',
+            color: 'var(--cashman-text)',
             width: 260,
             opacity: open ? 1 : 0,
             boxShadow: '0 8px 24px rgba(15,62,24,0.10), 0 2px 6px rgba(0,0,0,0.04)',
@@ -88,8 +88,8 @@ export function Tooltip({ label, preview, side = 'top', children }: TooltipProps
           className="pointer-events-none absolute z-50 whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-medium shadow-md"
           style={{
             ...positionStyle,
-            backgroundColor: '#0f3e18',
-            color: '#ffffff',
+            backgroundColor: 'var(--cashman-green-dark)',
+            color: 'var(--cashman-surface)',
             opacity: open ? 1 : 0,
             transition: 'opacity 150ms ease-out, transform 150ms ease-out',
           }}
