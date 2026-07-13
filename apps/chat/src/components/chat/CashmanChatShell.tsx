@@ -419,12 +419,8 @@ export function CashmanChatShell({
           style={{ borderColor: 'var(--cashman-border)' }}
         >
           <h1
-            className="truncate text-[19px] tracking-tight"
-            style={{
-              color: 'var(--cashman-text)',
-              fontFamily: 'Georgia, "Times New Roman", serif',
-              fontWeight: 700,
-            }}
+            className="truncate text-[18px] font-semibold tracking-tight"
+            style={{ color: 'var(--cashman-text)' }}
           >
             {conversationTitle}
           </h1>
