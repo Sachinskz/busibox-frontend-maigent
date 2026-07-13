@@ -83,8 +83,15 @@ export function CashmanComposer({
             placeholder={placeholder}
             rows={1}
             disabled={disabled}
-            className="min-h-[24px] max-h-[200px] flex-1 resize-none border-0 bg-transparent py-2 text-base outline-none placeholder:text-[var(--cashman-text-muted)]"
-            style={{ color: 'var(--cashman-text)' }}
+            className="min-h-[24px] max-h-[200px] flex-1 resize-none border-0 py-2 text-base outline-none placeholder:text-[var(--cashman-text-muted)]"
+            style={{
+              color: 'var(--cashman-text)',
+              // Inline background wins over the `.dark textarea` rule in
+              // globals.css that would otherwise force gray-900 here.
+              backgroundColor: 'transparent',
+              border: 'none',
+              boxShadow: 'none',
+            }}
           />
 
           <div className="flex flex-shrink-0 items-center gap-2">

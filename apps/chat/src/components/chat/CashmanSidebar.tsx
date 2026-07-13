@@ -198,21 +198,22 @@ export function CashmanSidebar({
 
       <div
         style={{
-          padding: collapsed ? '10px' : '10px',
+          padding: '10px',
           display: 'flex',
-          justifyContent: 'center',
+          justifyContent: collapsed ? 'center' : 'stretch',
         }}
       >
         <Tooltip label="Start a new chat" side="right">
           <button
             type="button"
             onClick={onCreateConversation}
-            className="group flex items-center justify-center rounded-full text-sm font-semibold text-white shadow-sm transition-all hover:brightness-105 active:scale-[0.98]"
+            className="group flex items-center rounded-full text-sm font-semibold text-white shadow-sm transition-all hover:brightness-105 active:scale-[0.98]"
             style={{
               width: collapsed ? 36 : '100%',
               height: 36,
-              padding: collapsed ? 0 : '0 12px',
-              gap: collapsed ? 0 : 8,
+              padding: collapsed ? 0 : '0 14px',
+              gap: collapsed ? 0 : 10,
+              justifyContent: collapsed ? 'center' : 'flex-start',
               backgroundColor: 'var(--cashman-teal)',
               transition: `all ${DURATION}ms ${EASE}, transform 150ms`,
               boxShadow: '0 1px 3px rgba(6,130,132,0.35)',

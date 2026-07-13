@@ -89,26 +89,28 @@
   --busibox-accent: #5a8c8c;
   --busibox-gray: #1f2937;
 
-  /* Cashman brand tokens — dark variant */
-  --cashman-bg: #0b1220;
-  --cashman-surface: #131a2c;
-  --cashman-surface-alt: #172033;
-  --cashman-border: #26314a;
-  --cashman-border-strong: #334155;
-  --cashman-text: #f1f5f9;
-  --cashman-text-body: #cbd5e1;
-  --cashman-text-muted: #94a3b8;
-  --cashman-text-subtle: #64748b;
-  --cashman-teal: #2dd4bf;
+  /* Cashman brand tokens — dark variant
+   * Softer near-black grays (not navy) with a calmer teal accent, so nothing
+   * feels neon or oversaturated. Aligns with the shared Busibox dark palette. */
+  --cashman-bg: #0f1113;
+  --cashman-surface: #17191c;
+  --cashman-surface-alt: #1c1f23;
+  --cashman-border: #26292e;
+  --cashman-border-strong: #333740;
+  --cashman-text: #e5e7eb;
+  --cashman-text-body: #c5c9d1;
+  --cashman-text-muted: #8a8f97;
+  --cashman-text-subtle: #6b7280;
+  --cashman-teal: #14b8a6;
   --cashman-teal-dark: #5eead4;
-  --cashman-teal-light: rgba(45, 212, 191, 0.16);
-  --cashman-teal-tint: rgba(45, 212, 191, 0.08);
-  --cashman-teal-border: rgba(45, 212, 191, 0.35);
-  --cashman-teal-muted: rgba(45, 212, 191, 0.55);
+  --cashman-teal-light: rgba(20, 184, 166, 0.14);
+  --cashman-teal-tint: rgba(20, 184, 166, 0.06);
+  --cashman-teal-border: rgba(20, 184, 166, 0.32);
+  --cashman-teal-muted: rgba(20, 184, 166, 0.45);
   --cashman-green-dark: #0f3e18;
-  --cashman-success: #34d399;
-  --cashman-error: #f87171;
-  --cashman-error-tint: rgba(248, 113, 113, 0.12);
+  --cashman-success: #22c55e;
+  --cashman-error: #ef4444;
+  --cashman-error-tint: rgba(239, 68, 68, 0.1);
   --cashman-error-text: #fca5a5;
 
   /* Additional semantic colors for dark mode */
