@@ -363,33 +363,32 @@ export function CashmanSidebar({
                 <div key={conv.id} className="group relative">
                   {selectBtn}
                   {onDeleteConversation && (
-                    <Tooltip label="Delete conversation" side="right">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (
-                            confirm(
-                              `Delete "${conv.title || 'New Conversation'}"? This cannot be undone.`,
-                            )
-                          ) {
-                            onDeleteConversation(conv);
-                          }
-                        }}
-                        aria-label="Delete conversation"
-                        className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md opacity-0 transition-opacity focus:opacity-100 focus:outline-none group-hover:opacity-100"
-                        style={{ color: '#ef4444' }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor =
-                            'rgba(239, 68, 68, 0.12)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                        }}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </Tooltip>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (
+                          confirm(
+                            `Delete "${conv.title || 'New Conversation'}"? This cannot be undone.`,
+                          )
+                        ) {
+                          onDeleteConversation(conv);
+                        }
+                      }}
+                      aria-label="Delete conversation"
+                      title="Delete conversation"
+                      className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md opacity-0 transition-opacity focus:opacity-100 focus:outline-none group-hover:opacity-100"
+                      style={{ color: '#ef4444' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          'rgba(239, 68, 68, 0.12)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   )}
                 </div>
               );
