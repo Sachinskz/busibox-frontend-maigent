@@ -86,6 +86,9 @@ export interface CashmanChatShellProps {
   initialConversations: Conversation[];
   initialMessages: Message[];
   initialConversation: Conversation | null;
+  /** Agent IDs to send with every message. The backend requires at least one
+   *  active agent context; empty causes a 400 from LiteLLM. */
+  defaultAgentIds?: string[];
   source?: string;
   conversationQueryParam?: string;
 }
@@ -94,6 +97,7 @@ export function CashmanChatShell({
   initialConversations,
   initialMessages,
   initialConversation,
+  defaultAgentIds = [],
   source = 'cashman-chat',
   conversationQueryParam = 'conversation',
 }: CashmanChatShellProps) {
@@ -296,7 +300,7 @@ export function CashmanChatShell({
           message: content,
           conversation_id: convId,
           model: 'auto',
-          selected_agents: [],
+          selected_agents: defaultAgentIds,
           metadata: { user_context: browserContext },
         });
 
@@ -336,7 +340,7 @@ export function CashmanChatShell({
         setMessages((prev) => prev.filter((m) => m.id !== tempUser.id));
       }
     },
-    [apiCall, ensureConversation, hookSendMessage, source],
+    [apiCall, ensureConversation, hookSendMessage, source, defaultAgentIds],
   );
 
   const handleCitationClick = useCallback(

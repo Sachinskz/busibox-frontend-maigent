@@ -41,20 +41,40 @@ async function CashmanChatPageContent({
   source,
   conversationQueryParam,
 }: CashmanChatPageProps) {
+  // Fetch conversations + agents in parallel. Agents are needed so we can
+  // pass the default "chat" agent ID with each message — the backend rejects
+  // requests without an agent context (falls through to using the literal
+  // string "chat" as a model name, which LiteLLM rejects with a 400).
   let conversations: any[] = [];
+  let agents: any[] = [];
   try {
-    conversations = await client
-      .getConversations({ limit: 50, source })
-      .catch((e: any) => {
+    [conversations, agents] = await Promise.all([
+      client.getConversations({ limit: 50, source }).catch((e: any) => {
         console.error(
           '[CashmanChatPage] Failed to load conversations:',
           e?.name === 'AbortError' ? 'Request timed out' : e?.message,
         );
         return [];
-      });
+      }),
+      client.getAgents().catch((e: any) => {
+        console.error(
+          '[CashmanChatPage] Failed to load agents:',
+          e?.name === 'AbortError' ? 'Request timed out' : e?.message,
+        );
+        return [];
+      }),
+    ]);
   } catch (e: any) {
     console.error('[CashmanChatPage] initial fetch failed:', e?.message);
   }
+
+  // Pick the default chat agent (matches shared ChatContainer's default logic).
+  const chatAgent = agents.find(
+    (a: any) =>
+      (a.name === 'chat' || a.name === 'chat-agent' || a.name === 'chat_agent') &&
+      a.is_active,
+  );
+  const defaultAgentIds = chatAgent ? [chatAgent.id] : [];
 
   let initialMessages: any[] = [];
   let currentConversation: any = null;
@@ -78,6 +98,7 @@ async function CashmanChatPageContent({
       initialConversations={conversations}
       initialMessages={initialMessages}
       initialConversation={currentConversation}
+      defaultAgentIds={defaultAgentIds}
       source={source}
       conversationQueryParam={conversationQueryParam}
     />
