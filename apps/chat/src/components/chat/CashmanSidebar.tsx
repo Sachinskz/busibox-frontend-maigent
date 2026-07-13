@@ -150,7 +150,9 @@ export function CashmanSidebar({
         width,
         borderColor: '#ebebeb',
         transition: dragging ? 'none' : `width ${DURATION}ms ${EASE}`,
-        overflow: 'hidden',
+        // overflow left visible so tooltips can escape to the right; internal
+        // scroll is handled by the nested list container below
+        overflow: 'visible',
       }}
     >
       <div
@@ -179,52 +181,49 @@ export function CashmanSidebar({
           </span>
         </div>
 
-        <Tooltip label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} side="right">
-          <button
-            type="button"
-            onClick={onToggleCollapsed}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] text-white shadow-sm transition-all hover:scale-105 active:scale-95"
-            style={{
-              backgroundColor: '#068284',
-              transition: 'background-color 150ms, transform 150ms',
-            }}
-          >
-            {collapsed ? (
-              <ChevronsRight className="h-4 w-4" />
-            ) : (
-              <ChevronsLeft className="h-4 w-4" />
-            )}
-          </button>
-        </Tooltip>
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] text-white shadow-sm outline-none transition-colors hover:brightness-110 focus-visible:ring-2 focus-visible:ring-[#068284]/40"
+          style={{ backgroundColor: '#068284' }}
+        >
+          {collapsed ? (
+            <ChevronsRight className="h-4 w-4" />
+          ) : (
+            <ChevronsLeft className="h-4 w-4" />
+          )}
+        </button>
       </div>
 
-      <div style={{ padding: collapsed ? '10px 8px' : '10px' }}>
+      <div
+        style={{
+          padding: collapsed ? '10px' : '10px',
+          display: 'flex',
+          justifyContent: 'center',
+        }}
+      >
         <Tooltip label="Start a new chat" side="right">
           <button
             type="button"
             onClick={onCreateConversation}
-            className="group flex items-center justify-center gap-2 rounded-full text-sm font-semibold text-white shadow-sm transition-all hover:brightness-105 active:scale-[0.98]"
+            className="group flex items-center justify-center rounded-full text-sm font-semibold text-white shadow-sm transition-all hover:brightness-105 active:scale-[0.98]"
             style={{
               width: collapsed ? 36 : '100%',
-              height: collapsed ? 36 : 'auto',
-              padding: collapsed ? 0 : '8px 12px',
+              height: 36,
+              padding: collapsed ? 0 : '0 12px',
+              gap: collapsed ? 0 : 8,
               backgroundColor: '#068284',
               transition: `all ${DURATION}ms ${EASE}, transform 150ms`,
               boxShadow: '0 1px 3px rgba(6,130,132,0.35)',
             }}
           >
             <Plus className="h-[18px] w-[18px] flex-shrink-0 transition-transform group-hover:rotate-90" />
-            <span
-              className="overflow-hidden whitespace-nowrap"
-              style={{
-                opacity: collapsed ? 0 : 1,
-                maxWidth: collapsed ? 0 : 120,
-                transition: `opacity ${DURATION}ms ${EASE}, max-width ${DURATION}ms ${EASE}`,
-              }}
-            >
-              New chat
-            </span>
+            {!collapsed && (
+              <span className="overflow-hidden whitespace-nowrap">
+                New chat
+              </span>
+            )}
           </button>
         </Tooltip>
       </div>
