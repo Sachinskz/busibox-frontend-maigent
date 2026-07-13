@@ -400,19 +400,6 @@ export function CashmanSidebar({
 
       {!collapsed && (
         <div
-          className="pointer-events-none border-t px-3 py-2 text-[10px] italic"
-          style={{
-            borderColor: 'var(--cashman-border)',
-            color: 'var(--cashman-text-subtle)',
-            transition: `opacity ${DURATION}ms ${EASE}`,
-          }}
-        >
-          Click « to collapse · drag to resize
-        </div>
-      )}
-
-      {!collapsed && (
-        <div
           role="separator"
           aria-orientation="vertical"
           aria-label="Resize sidebar"
