@@ -34,18 +34,18 @@ export interface MarineBrandConfig {
 const DEFAULT_PROMPTS: SuggestedPrompt[] = [
   {
     description:
-      'Search across your uploaded documents and get a concise answer with source citations.',
-    prompt: 'Summarise what my documents say about our leave policy.',
+      'Start with an open question — the assistant will pick the right tools and context to answer.',
+    prompt: 'What can you help me with?',
   },
   {
     description:
-      'Ask about any policy, benefit, or procedure — the assistant will find the relevant document and cite the page.',
-    prompt: 'What is the process for expense reimbursement?',
+      'Ask for a summary, comparison, or step-by-step walkthrough of any topic.',
+    prompt: 'Explain something to me, step by step.',
   },
   {
     description:
-      'You can also ask for definitions, comparisons, or step-by-step how-to guidance based on your documents.',
-    prompt: 'Compare the two health insurance plans on offer.',
+      'Follow-ups are in natural language — earlier context in the conversation is remembered.',
+    prompt: 'Give me a short summary of what we just discussed.',
   },
 ];
 
